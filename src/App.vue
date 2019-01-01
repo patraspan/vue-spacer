@@ -6,14 +6,21 @@
       <router-link to="/">spacer</router-link>
       <router-link to="/about">about</router-link>
     </div> -->
-    <div class="wrapper">
-      <HeroImage />
-      <Claim/>
+    <div :class="[{flexStart: step === 1}, 'wrapper']">
+      <transition name="slide">
+        <img src="./assets/logo.svg" v-if="step === 1" />
+      </transition>
+      <transition name="fade">
+        <HeroImage v-if="step === 0" />
+      </transition>
+      <Claim v-if="step === 0"/>
       <SearchInput 
       v-model="searchValue"
       @input="handleInput"
+      :dark="step === 1"
       />
     </div>
+    
   </div>
 </template>
 
@@ -36,16 +43,21 @@ export default {
   },
   data() {
     return {
+      loading: false,
+      step: 0,
       searchValue: "",
       results: []
     };
   },
   methods: {
     handleInput: debounce(function() {
+      this.loading = true
       axios
         .get(`${API}?q=${this.searchValue}&media_type=image`)
         .then(res => {
           this.results = res.data.collection.items;
+          this.loading = false
+          this.step = 1
         })
         .catch(err => {
           console.log(err);
@@ -67,6 +79,20 @@ body {
   margin: 0;
   padding: 0;
 }
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+.slide-enter-active, .slide-leave-active {
+  transition: margin-top .3s ease;
+}
+.slide-enter, .slide-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  margin-top: -50px;
+}
+
 .wrapper {
   margin: 0;
   min-height: 100vh;
@@ -77,5 +103,8 @@ body {
   justify-content: center;
   width: 100%;
  color: white;
+ &.flexStart {
+   justify-content: flex-start;
+ }
 }
 </style>
